@@ -134,14 +134,20 @@ model.to(DEVICE)
 # 5. Loss Function & Optimizer
 # -------------------------------------------------------------
 criterion = ShapeFromShadingLoss(
-    sun_azimuth_deg=45.0, 
-    sun_elevation_deg=30.0, 
-    lambda_smooth=0.05,
+    sun_azimuth_deg=65.0, 
+    sun_elevation_deg=12.0, 
+    lambda_smooth=0.001,
     model_type="lommel_seeliger"
 ).to(DEVICE)
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=0.01)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+    optimizer, T_max=EPOCHS, eta_min=1e-6
+)
 
+# -------------------------------------------------------------
+# 6. Training Loop
+# -------------------------------------------------------------
 # -------------------------------------------------------------
 # 6. Training Loop
 # -------------------------------------------------------------
@@ -169,9 +175,19 @@ for epoch in range(EPOCHS):
         running_photo += loss_dict['l_photo']
         running_smooth += loss_dict['l_smooth']
 
+    # Get current learning rate before stepping
+    current_lr = scheduler.get_last_lr()[0]
+
+    # Step learning rate scheduler forward one epoch
+    scheduler.step()
+
     print(f"Epoch [{epoch+1}/{EPOCHS}] | Total Loss: {running_loss/len(dataloader):.4f} "
           f"| Photometric Loss: {running_photo/len(dataloader):.4f} "
-          f"| Smoothness: {running_smooth/len(dataloader):.4f}")
+          f"| Smoothness: {running_smooth/len(dataloader):.4f} "
+          f"| LR: {current_lr:.2e}")
+
+    # Save model checkpoint
+    torch.save(model.state_dict(), f"lunar_dem_sfs_epoch{epoch+1}.pth")
 
     # -------------------------------------------------------------
     # 7. Save Visual Progress Plot (3-Panel Comparison)

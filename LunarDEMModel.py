@@ -188,3 +188,17 @@ class ShapeFromShadingLoss(nn.Module):
         total_loss = l_photo + (self.lambda_smooth * l_smooth)
 
         return total_loss, rendered_shading, {"l_photo": l_photo.item(), "l_smooth": l_smooth.item()}
+
+def forward(self, x):
+        features = self.encoder.forward_features(x)
+        if features.shape[1] == (self.grid_size ** 2) + 1:
+            features = features[:, 1:, :]
+            
+        B, N, D = features.shape
+        features_2d = features.permute(0, 2, 1).view(B, D, self.grid_size, self.grid_size)
+        dem_map = self.decoder_head(features_2d)
+        
+        # ADD THIS LINE: Zero-mean detrending stops global plane tilts
+        dem_map = dem_map - dem_map.mean(dim=(-2, -1), keepdim=True)
+        
+        return dem_map
