@@ -134,8 +134,8 @@ model.to(DEVICE)
 # 5. Loss Function & Optimizer
 # -------------------------------------------------------------
 criterion = ShapeFromShadingLoss(
-    sun_azimuth_deg=65.0, 
-    sun_elevation_deg=12.0, 
+    sun_azimuth_deg=90.0, 
+    sun_elevation_deg=2.0, 
     lambda_smooth=0.001,
     model_type="lommel_seeliger"
 ).to(DEVICE)
